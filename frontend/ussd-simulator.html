@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USSD Simulator - CitizenVoice AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .phone-container {
+            background: #000;
+            border-radius: 30px;
+            padding: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .phone-screen {
+            background: #e8e8e8;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .phone-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .ussd-display {
+            background: white;
+            min-height: 400px;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .ussd-input-area {
+            background: #f5f5f5;
+            padding: 15px;
+            border-top: 2px solid #ddd;
+        }
+
+        .ussd-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .ussd-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: monospace;
+        }
+
+        .ussd-button {
+            padding: 12px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .ussd-button:hover {
+            background: #229954;
+        }
+
+        .ussd-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .ussd-button.reset {
+            background: #e74c3c;
+        }
+
+        .ussd-button.reset:hover {
+            background: #c0392b;
+        }
+
+        .dial-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .dial-button {
+            padding: 15px;
+            background: #34495e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .dial-button:hover {
+            background: #2c3e50;
+        }
+
+        .dial-button:active {
+            transform: scale(0.95);
+        }
+
+        .session-info {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+
+        .instruction {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .instruction h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="width: 100%; text-align: center; margin-bottom: 20px;">
+        <a href="index.html" style="text-decoration: none; color: #fff; background: #34495e; padding: 10px 20px; border-radius: 8px; font-weight: bold; transition: background 0.3s;">
+            ⬅️ Back to Home
+        </a>
+    </div>
+
+    <div class="phone-container">
+        <div class="phone-screen">
+            <div class="phone-header">
+                📱 USSD Simulator - *811#
+            </div>
+            
+            <div class="ussd-display" id="ussd-display">
+Dial *811# to start CitizenVoice AI
+            </div>
+            
+            <div class="ussd-input-area">
+                <div class="session-info">
+                    <div>Session: <span id="session-id">Not Started</span></div>
+                    <div>Phone: <span id="phone-number">+256700000000</span></div>
+                </div>
+
+                <div class="instruction">
+                    <h3>How to Use:</h3>
+                    <p>1. Enter phone number (or use default)</p>
+                    <p>2. Click "Dial *811#" to start</p>
+                    <p>3. Enter numbers to navigate menu</p>
+                    <p>4. Type text when prompted</p>
+                </div>
+
+                <div class="ussd-input-group">
+                    <input type="tel" id="phone-input" class="ussd-input" 
+                           placeholder="Phone: +256700000000" value="+256700000000">
+                </div>
+
+                <div class="dial-pad">
+                    <button class="dial-button" onclick="addDigit('1')">1</button>
+                    <button class="dial-button" onclick="addDigit('2')">2</button>
+                    <button class="dial-button" onclick="addDigit('3')">3</button>
+                    <button class="dial-button" onclick="addDigit('4')">4</button>
+                    <button class="dial-button" onclick="addDigit('5')">5</button>
+                    <button class="dial-button" onclick="addDigit('6')">6</button>
+                    <button class="dial-button" onclick="addDigit('7')">7</button>
+                    <button class="dial-button" onclick="addDigit('8')">8</button>
+                    <button class="dial-button" onclick="addDigit('9')">9</button>
+                    <button class="dial-button" onclick="addDigit('*')">*</button>
+                    <button class="dial-button" onclick="addDigit('0')">0</button>
+                    <button class="dial-button" onclick="addDigit('#')">#</button>
+                </div><div class="ussd-input-group">
+                <input type="text" id="ussd-input" class="ussd-input" 
+                       placeholder="Type here or use dial pad..." disabled>
+            </div>
+
+            <div class="ussd-input-group">
+                <button id="dial-btn" class="ussd-button" onclick="dialUSSD()">
+                    📞 Dial *811#
+                </button>
+                <button class="ussd-button" onclick="sendInput()" id="send-btn" disabled>
+                    Send
+                </button>
+                <button class="ussd-button reset" onclick="resetSession()">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = 'http://localhost:5000/api';
+    let sessionId = null;
+    let currentText = '';
+    let isSessionActive = false;
+
+    function generateSessionId() {
+        return 'SIM-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function addDigit(digit) {
+        if (!isSessionActive) return;
+        const input = document.getElementById('ussd-input');
+        input.value += digit;
+    }
+
+    async function dialUSSD() {
+        const phoneInput = document.getElementById('phone-input');
+        const phone = phoneInput.value.trim();
+        
+        if (!phone) {
+            alert('Please enter a phone number');
+            return;
+        }
+
+        sessionId = generateSessionId();
+        currentText = '';
+        isSessionActive = true;
+
+        document.getElementById('session-id').textContent = sessionId;
+        document.getElementById('phone-number').textContent = phone;
+        document.getElementById('ussd-input').disabled = false;
+        document.getElementById('send-btn').disabled = false;
+        document.getElementById('dial-btn').disabled = true;
+
+        await makeUSSDRequest('');
+    }
+
+    async function sendInput() {
+        const input = document.getElementById('ussd-input');
+        const userInput = input.value.trim();
+
+        if (!userInput) {
+            alert('Please enter a value');
+            return;
+        }
+
+        currentText = currentText ? `${currentText}*${userInput}` : userInput;
+        input.value = '';
+
+        await makeUSSDRequest(currentText);
+    }
+
+    async function makeUSSDRequest(text) {
+        const phone = document.getElementById('phone-number').textContent;
+        const display = document.getElementById('ussd-display');
+
+        try {
+            display.textContent = 'Loading...';
+
+            const response = await fetch(`${API_BASE_URL}/ussd/simulate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    phoneNumber: phone,
+                    text: text
+                })
+            });
+
+            const result = await response.json();
+            
+            // Remove CON or END prefix for display
+            let message = result.message.replace(/^(CON|END)\s/, '');
+            display.textContent = message;
+
+            // If session ended, disable inputs
+            if (!result.continue) {
+                isSessionActive = false;
+                document.getElementById('ussd-input').disabled = true;
+                document.getElementById('send-btn').disabled = true;
+                document.getElementById('dial-btn').disabled = false;
+                
+                // Auto reset after 3 seconds
+                setTimeout(() => {
+                    display.textContent = 'Session Ended\n\nDial *811# to start again';
+                }, 3000);
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            display.textContent = 'Error: Could not connect to server.\nPlease ensure the backend is running.';
+        }
+    }
+
+    function resetSession() {
+        sessionId = null;
+        currentText = '';
+        isSessionActive = false;
+
+        document.getElementById('session-id').textContent = 'Not Started';
+        document.getElementById('ussd-input').value = '';
+        document.getElementById('ussd-input').disabled = true;
+        document.getElementById('send-btn').disabled = true;
+        document.getElementById('dial-btn').disabled = false;
+        document.getElementById('ussd-display').textContent = 'Dial *811# to start CitizenVoice AI';
+    }
+
+    // Allow Enter key to send
+    document.getElementById('ussd-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendInput();
+        }
+    });
+</script>
+</body>
+</html>

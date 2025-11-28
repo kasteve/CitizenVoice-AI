@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CitizenVoice AI - Participatory Governance Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🗳️ CitizenVoice AI</h1>
+                <p>Empowering Citizens, Transforming Governance</p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#policies">Policies</a></li>
+                <li><a href="#feedback">Feedback</a></li>
+                <li><a href="#complaints">Complaints</a></li>
+                <li><a href="#ratings">Ratings</a></li>
+                <li><a href="ussd-simulator.html" target="_blank">USSD Simulator</a></li>
+
+            </ul>
+        </div>
+    </nav>
+    <div class="hero">
+    <div class="container">
+        <h2>Your Voice Matters in Policy Making</h2>
+        <p>Participate in governance, track complaints, and rate public services</p>
+    </div>
+</div>
+
+<div class="container main-content">
+    <!-- Stats Dashboard -->
+    <section class="stats-section">
+        <div class="stat-card">
+            <h3 id="policy-count">0</h3>
+            <p>Active Policies</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="feedback-count">0</h3>
+            <p>Citizen Feedback</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="complaint-count">0</h3>
+            <p>Complaints Submitted</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="rating-count">0</h3>
+            <p>Service Ratings</p>
+        </div>
+    </section>
+
+    <!-- Active Policies Section -->
+    <section id="policies" class="section">
+        <h2>Active Policies for Public Consultation</h2>
+        <div id="policies-list" class="cards-grid">
+            <!-- Policies will be loaded here -->
+        </div>
+    </section>
+
+    <!-- Submit Feedback Section -->
+    <section id="feedback" class="section">
+        <h2>Submit Policy Feedback</h2>
+        <div class="form-container">
+            <form id="feedback-form">
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="feedback-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="feedback-phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Select Policy</label>
+                    <select id="feedback-policy" required>
+                        <option value="">Choose a policy...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Your Feedback</label>
+                    <textarea id="feedback-text" rows="6" required placeholder="Share your thoughts, concerns, or suggestions about this policy..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Submit Feedback</button>
+            </form>
+            <div id="feedback-result" class="result-box"></div>
+        </div>
+    </section>
+
+    <!-- Submit Complaint Section -->
+    <section id="complaints" class="section">
+        <h2>Report an Issue</h2>
+        <div class="form-container">
+            <form id="complaint-form">
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="complaint-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="complaint-phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="complaint-category">
+                        <option>Infrastructure</option>
+                        <option>Healthcare</option>
+                        <option>Education</option>
+                        <option>Security</option>
+                        <option>Corruption</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Location/District</label>
+                    <input type="text" id="complaint-location" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="complaint-description" rows="6" required placeholder="Describe the issue in detail..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Submit Complaint</button>
+            </form>
+            <div id="complaint-result" class="result-box"></div>
+        </div>
+
+        <!-- Track Complaint -->
+        <div class="form-container" style="margin-top: 30px;">
+            <h3>Track Your Complaint</h3>
+            <form id="track-form">
+                <div class="form-group">
+                    <label>Tracking Number</label>
+                    <input type="text" id="track-number" required placeholder="CMP-XXXXXXXX">
+                </div>
+                <button type="submit" class="btn-secondary">Track Status</button>
+            </form>
+            <div id="track-result" class="result-box"></div>
+        </div>
+    </section>
+
+    <!-- Rate Service Section -->
+    <section id="ratings" class="section">
+        <h2>Rate Government Services</h2>
+        <div class="form-container">
+            <form id="rating-form">
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="rating-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="rating-phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Service Type</label>
+                    <select id="rating-service-type">
+                        <option>Hospital</option>
+                        <option>School</option>
+                        <option>Police Station</option>
+                        <option>Government Office</option>
+                        <option>Court</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Service Location</label>
+                    <input type="text" id="rating-location" required>
+                </div>
+                <div class="form-group">
+                    <label>Rating (1-5)</label>
+                    <div class="rating-stars" id="rating-stars">
+                        <span data-value="1">★</span>
+                        <span data-value="2">★</span>
+                        <span data-value="3">★</span>
+                        <span data-value="4">★</span>
+                        <span data-value="5">★</span>
+                    </div>
+                    <input type="hidden" id="rating-value" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Comment (Optional)</label>
+                    <textarea id="rating-comment" rows="4" placeholder="Share your experience..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Submit Rating</button>
+            </form>
+            <div id="rating-result" class="result-box"></div>
+        </div>
+    </section>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 CitizenVoice AI | National AI Hackathon | Built for Good Governance</p>
+    </div>
+</footer>
+
+<script src="js/app.js"></script>
+<script src="js/policy.js"></script>
+<script src="js/feedback.js"></script>
+</body>
+</html>
