@@ -66,6 +66,8 @@ python app.py
 
 ### Step 3: Frontend Setup
 ```bash
+run this command in the frontend path  python -m http.server 8000
+and access the ui http://127.0.0.1:8000/login.html
 # Simply open frontend files in browser
 # Main app: http://localhost:5000
 # Login: frontend/login.html

@@ -30,6 +30,8 @@ python app.py
 
 ### 3. Frontend Setup
 ```bash
+run this command in the frontend path  python -m http.server 8000
+and access the ui http://127.0.0.1:8000/login.html
 # Simply open frontend/index.html in a browser
 # For USSD simulator, open frontend/ussd-simulator.html
 ```

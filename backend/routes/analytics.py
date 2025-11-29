@@ -258,3 +258,18 @@ def unresolved_by_ministry(current_user):
     data = [{'ministry': row.name, 'unresolved_count': row.unresolved_count} for row in results]
     
     return jsonify(data), 200
+
+@bp.route('/generate-report', methods=['POST'])
+@token_required
+def generate_report_endpoint(current_user):
+    """Generate comprehensive system report"""
+    from ai.report_generator import ReportGenerator
+    
+    try:
+        report = ReportGenerator.generate_system_report(current_user.id)
+        return jsonify({
+            'message': 'Report generated successfully',
+            'report': report
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

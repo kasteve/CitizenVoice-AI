@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Districts - CitizenVoice AI</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🗳️ CitizenVoice</h2>
+                <p>Admin Panel</p>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html">📊 Dashboard</a></li>
+                <li><a href="ministries.html">🏛️ Ministries</a></li>
+                <li><a href="districts.html" class="active">📍 Districts</a></li>
+                <li><a href="users.html">👥 Users</a></li>
+                <li><a href="complaints-admin.html">📢 All Complaints</a></li>
+                <li><a href="reports.html">📄 Reports</a></li>
+                <li><a href="../analytics.html">📈 Analytics</a></li>
+                <li><a href="../dashboard.html">← Back to User View</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <h4 id="user-name">Loading...</h4>
+                    <p id="user-role">Administrator</p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <h1>District Management</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-primary" onclick="showAddDistrictModal()">+ Add District</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-districts">0</div>
+                        <div class="stat-card-label">Total Districts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="central-region">0</div>
+                        <div class="stat-card-label">Central Region</div>
+                   </div>
+<div class="stat-card">
+<div class="stat-card-value" id="districts-with-chairpersons">0</div>
+<div class="stat-card-label">With Chairpersons</div>
+</div>
+<div class="stat-card">
+<div class="stat-card-value" id="total-district-complaints">0</div>
+<div class="stat-card-label">Total Complaints</div>
+</div>
+</div>
+<!-- Districts List -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>All Districts</h2>
+                    <select id="region-filter" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" onchange="filterDistricts()">
+                        <option value="">All Regions</option>
+                        <option value="Central">Central</option>
+                        <option value="Eastern">Eastern</option>
+                        <option value="Northern">Northern</option>
+                        <option value="Western">Western</option>
+                        <option value="West Nile">West Nile</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>District Name</th>
+                                <th>Region</th>
+                                <th>Chairperson</th>
+                                <th>Total Complaints</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="districts-list">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 30px;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Add/Edit District Modal -->
+<div id="district-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 20px;">
+    <div style="background: white; margin: 50px auto; padding: 40px; border-radius: 15px; max-width: 600px;">
+        <h2 style="margin-bottom: 20px;" id="modal-title">Add District</h2>
+        <form id="district-form">
+            <input type="hidden" id="district-id">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">District Name *</label>
+                <input type="text" id="district-name" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Region *</label>
+                <select id="district-region" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                    <option value="">Select region...</option>
+                    <option value="Central">Central</option>
+                    <option value="Eastern">Eastern</option>
+                    <option value="Northern">Northern</option>
+                    <option value="Western">Western</option>
+                    <option value="West Nile">West Nile</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chairperson (Optional)</label>
+                <select id="district-chairperson" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                    <option value="">No chairperson</option>
+                </select>
+                <small style="color: #666;">Note: Only users with Chairperson role will appear here</small>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Save District</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDistrictModal()" style="flex: 1;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = 'http://localhost:5000/api';
+    let currentUser = null;
+    let authToken = null;
+    let editingDistrictId = null;
+    let allDistricts = [];
+
+    // Check authentication
+    function checkAuth() {
+        authToken = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+
+        if (!authToken || !userStr) {
+            window.location.href = '../login.html';
+            return;
+        }
+
+        currentUser = JSON.parse(userStr);
+        
+        if (currentUser.role_id !== 2) {
+            alert('Access denied. Admin privileges required.');
+            window.location.href = '../dashboard.html';
+            return;
+        }
+
+        document.getElementById('user-name').textContent = currentUser.name;
+    }
+
+    // Logout
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '../login.html';
+    }
+
+    // API call with auth
+    async function apiCall(endpoint, method = 'GET', data = null) {
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            }
+        };
+
+        if (data) {
+            options.body = JSON.stringify(data);
+        }
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
+        if (response.status === 401) {
+            logout();
+            return;
+        }
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Request failed');
+        }
+
+        return await response.json();
+    }
+
+    // Load districts
+    async function loadDistricts() {
+        try {
+            const districts = await apiCall('/admin/districts');
+            const districtData = await apiCall('/analytics/complaints-by-district');
+            
+            if (Array.isArray(districts)) {
+                allDistricts = districts;
+                document.getElementById('total-districts').textContent = districts.length;
+                
+                const centralCount = districts.filter(d => d.region === 'Central').length;
+                const withChairpersons = districts.filter(d => d.chairperson_id).length;
+                
+                document.getElementById('central-region').textContent = centralCount;
+                document.getElementById('districts-with-chairpersons').textContent = withChairpersons;
+                
+                if (districtData && Array.isArray(districtData)) {
+                    const totalComplaints = districtData.reduce((sum, d) => sum + (d.total || 0), 0);
+                    document.getElementById('total-district-complaints').textContent = totalComplaints;
+                }
+                
+                displayDistricts(districts, districtData);
+            }
+        } catch (error) {
+            console.error('Error loading districts:', error);
+        }
+    }
+
+    // Display districts
+    function displayDistricts(districts, complaintData = []) {
+        const tbody = document.getElementById('districts-list');
+
+        if (districts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No districts found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = districts.map(district => {
+            const complaints = complaintData.find(d => d.district === district.name);
+            const complaintCount = complaints ? complaints.total : 0;
+
+            return `
+                <tr>
+                    <td><strong>${district.name}</strong></td>
+                    <td>${district.region || 'N/A'}</td>
+                    <td>${district.chairperson_id ? 'Assigned' : 'Not Assigned'}</td>
+                    <td>${complaintCount}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 5px 15px;" onclick="editDistrict(${district.id})">Edit</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Filter districts
+    function filterDistricts() {
+        const region = document.getElementById('region-filter').value;
+        
+        if (!region) {
+            loadDistricts();
+        } else {
+            const filtered = allDistricts.filter(d => d.region === region);
+            displayDistricts(filtered);
+        }
+    }
+
+    // Show add district modal
+    async function showAddDistrictModal() {
+        editingDistrictId = null;
+        document.getElementById('modal-title').textContent = 'Add District';
+        document.getElementById('district-form').reset();
+        document.getElementById('district-id').value = '';
+        
+        // Load chairpersons
+        await loadChairpersons();
+        
+        document.getElementById('district-modal').style.display = 'block';
+    }
+
+    // Load chairpersons
+    async function loadChairpersons() {
+        try {
+            const users = await apiCall('/admin/users?role=4'); // Role 4 = Chairperson
+            const select = document.getElementById('district-chairperson');
+            
+            // Clear existing options except first
+            select.innerHTML = '<option value="">No chairperson</option>';
+            
+            if (Array.isArray(users)) {
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.name} (${user.nin})`;
+                    select.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading chairpersons:', error);
+        }
+    }
+
+    // Edit district
+    async function editDistrict(id) {
+        try {
+            const districts = await apiCall('/admin/districts');
+            const district = districts.find(d => d.id === id);
+            
+            if (district) {
+                editingDistrictId = id;
+                document.getElementById('modal-title').textContent = 'Edit District';
+                document.getElementById('district-id').value = district.id;
+                document.getElementById('district-name').value = district.name;
+                document.getElementById('district-region').value = district.region || '';
+                
+                await loadChairpersons();
+                
+                if (district.chairperson_id) {
+                    document.getElementById('district-chairperson').value = district.chairperson_id;
+                }
+                
+                document.getElementById('district-modal').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading district:', error);
+        }
+    }
+
+    // Close district modal
+    function closeDistrictModal() {
+        document.getElementById('district-modal').style.display = 'none';
+        document.getElementById('district-form').reset();
+        editingDistrictId = null;
+    }
+
+    // Submit district form
+    document.getElementById('district-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const data = {
+            name: document.getElementById('district-name').value,
+            region: document.getElementById('district-region').value,
+            chairperson_id: document.getElementById('district-chairperson').value || null
+        };
+
+        try {
+            if (editingDistrictId) {
+                await apiCall(`/admin/districts/${editingDistrictId}`, 'PUT', data);
+                alert('District updated successfully!');
+            } else {
+                await apiCall('/admin/districts', 'POST', data);
+                alert('District created successfully!');
+            }
+            
+            closeDistrictModal();
+            loadDistricts();
+        } catch (error) {
+            console.error('Error saving district:', error);
+            alert('Error: ' + error.message);
+        }
+    });
+
+    // Initialize
+    checkAuth();
+    loadDistricts();
+</script>
+</body>
+</html>

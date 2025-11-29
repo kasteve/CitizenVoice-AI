@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CitizenVoice AI</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🗳️ CitizenVoice</h2>
+                <p>Admin Panel</p>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+                <li><a href="ministries.html">🏛️ Ministries</a></li>
+                <li><a href="districts.html">📍 Districts</a></li>
+                <li><a href="users.html">👥 Users</a></li>
+                <li><a href="complaints-admin.html">📢 All Complaints</a></li>
+                <li><a href="reports.html">📄 Reports</a></li>
+                <li><a href="../analytics.html">📈 Analytics</a></li>
+                <li><a href="../dashboard.html">← Back to User View</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <h4 id="user-name">Loading...</h4>
+                    <p id="user-role">Administrator</p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <h1>Admin Dashboard</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-primary" onclick="generateSystemReport()">📊 Generate Report</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Overall Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="total-users">0</div>
+                                <div class="stat-card-label">Total Users</div>
+                            </div>
+                            <div class="stat-card-icon blue">👥</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="total-complaints">0</div>
+                                <div class="stat-card-label">Total Complaints</div>
+                            </div>
+                            <div class="stat-card-icon yellow">📢</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="pending-complaints">0</div>
+                                <div class="stat-card-label">Pending Complaints</div>
+                            </div>
+                            <div class="stat-card-icon red">⏳</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="resolution-rate">0%</div>
+                                <div class="stat-card-label">Resolution Rate</div>
+                            </div>
+                            <div class="stat-card-icon green">✅</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Row -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-ministries">0</div>
+                        <div class="stat-card-label">Ministries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-districts">0</div>
+                        <div class="stat-card-label">Districts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-policies">0</div>
+                        <div class="stat-card-label">Active Policies</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-feedback">0</div>
+                        <div class="stat-card-label">Policy Feedback</div>
+                    </div>
+                </div>
+
+                <!-- Recent Complaints -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Recent Complaints</h2>
+                        <button class="btn btn-secondary" onclick="window.location.href='complaints-admin.html'">View All</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tracking #</th>
+                                    <th>Citizen</th>
+                                    <th>Category</th>
+                                    <th>Ministry</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-complaints">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 30px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Ministry Performance -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Ministry Performance Overview</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ministry</th>
+                                    <th>Total Complaints</th>
+                                    <th>Pending</th>
+                                    <th>In Progress</th>
+                                    <th>Resolved</th>
+                                    <th>Resolution Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ministry-performance">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 30px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- District Overview -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Top Districts by Complaint Volume</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>District</th>
+                                    <th>Region</th>
+                                    <th>Total Complaints</th>
+                                    <th>Pending</th>
+                                    <th>Resolved</th>
+                                </tr>
+                            </thead>
+                            <tbody id="district-overview">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 30px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let authToken = null;
+
+        // Check authentication
+        function checkAuth() {
+            authToken = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+
+            if (!authToken || !userStr) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            currentUser = JSON.parse(userStr);
+            
+            // Check if user is admin
+            if (currentUser.role_id !== 2) {
+                alert('Access denied. Admin privileges required.');
+                window.location.href = '../dashboard.html';
+                return;
+            }
+
+            document.getElementById('user-name').textContent = currentUser.name;
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../login.html';
+        }
+
+        // API call with auth
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            return await response.json();
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                // Load analytics
+                const analytics = await apiCall('/analytics/dashboard');
+                if (analytics) {
+                    document.getElementById('total-complaints').textContent = analytics.total_complaints;
+                    document.getElementById('pending-complaints').textContent = analytics.pending_complaints;
+                    document.getElementById('resolution-rate').textContent = analytics.resolution_rate + '%';
+                    document.getElementById('total-feedback').textContent = analytics.total_feedback;
+                }
+
+                // Load users count
+                const users = await apiCall('/admin/users');
+                if (Array.isArray(users)) {
+                    document.getElementById('total-users').textContent = users.length;
+                }
+
+                // Load ministries
+                const ministries = await apiCall('/admin/ministries');
+                if (Array.isArray(ministries)) {
+                    document.getElementById('total-ministries').textContent = ministries.length;
+                    loadMinistryPerformance(ministries);
+                }
+
+                // Load districts
+                const districts = await apiCall('/admin/districts');
+                if (Array.isArray(districts)) {
+                    document.getElementById('total-districts').textContent = districts.length;
+                }
+
+                // Load policies
+                const policies = await apiCall('/policies/');
+                if (Array.isArray(policies)) {
+                    document.getElementById('total-policies').textContent = policies.filter(p => p.status === 'Active').length;
+                }
+
+                // Load recent complaints (create this endpoint or use existing data)
+                loadRecentComplaints();
+
+                // Load district overview
+                loadDistrictOverview();
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Load recent complaints
+        async function loadRecentComplaints() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/analytics/dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                // For now, show placeholder
+                const tbody = document.getElementById('recent-complaints');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #666;">
+                            Recent complaints will be displayed here. Navigate to "All Complaints" to manage them.
+                        </td>
+                    </tr>
+                `;
+            } catch (error) {
+                console.error('Error loading recent complaints:', error);
+            }
+        }
+
+        // Load ministry performance
+        async function loadMinistryPerformance(ministries) {
+            try {
+                const performance = await apiCall('/analytics/complaints-by-ministry');
+                const tbody = document.getElementById('ministry-performance');
+
+                if (!performance || performance.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">No data available</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = performance.map(m => `
+                    <tr>
+                        <td><strong>${m.ministry}</strong></td>
+                        <td>${m.total}</td>
+                        <td>${m.pending}</td>
+                        <td>${m.in_progress}</td>
+                        <td>${m.resolved}</td>
+                        <td>
+                            <span class="status-badge ${m.resolution_rate >= 70 ? 'status-resolved' : m.resolution_rate >= 40 ? 'status-in-progress' : 'status-pending'}">
+                                ${m.resolution_rate}%
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading ministry performance:', error);
+            }
+        }
+
+        // Load district overview
+        async function loadDistrictOverview() {
+            try {
+                const districts = await apiCall('/analytics/complaints-by-district');
+                const tbody = document.getElementById('district-overview');
+
+                if (!districts || districts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No data available</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = districts.slice(0, 10).map(d => `
+                    <tr>
+                        <td><strong>${d.district}</strong></td>
+                        <td>${d.region || 'N/A'}</td>
+                        <td>${d.total}</td>
+                        <td>${d.pending}</td>
+                        <td>${d.resolved}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading district overview:', error);
+            }
+        }
+
+        // Generate system report
+        async function generateSystemReport() {
+            if (!confirm('Generate a comprehensive system report with AI predictions?')) {
+                return;
+            }
+
+            try {
+                const report = await apiCall('/analytics/generate-report', 'POST', {
+                    generated_by: currentUser.id
+                });
+
+                if (report) {
+                    alert('System report generated successfully!\n\nView it in the Reports section.');
+                    window.location.href = 'reports.html';
+                }
+            } catch (error) {
+                console.error('Error generating report:', error);
+                alert('Failed to generate report. Please try again.');
+            }
+        }
+
+        // Initialize
+        checkAuth();
+        loadDashboard();
+    </script>
+</body>
+</html>

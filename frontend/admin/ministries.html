@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ministries - CitizenVoice AI</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🗳️ CitizenVoice</h2>
+                <p>Admin Panel</p>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html">📊 Dashboard</a></li>
+                <li><a href="ministries.html" class="active">🏛️ Ministries</a></li>
+                <li><a href="districts.html">📍 Districts</a></li>
+                <li><a href="users.html">👥 Users</a></li>
+                <li><a href="complaints-admin.html">📢 All Complaints</a></li>
+                <li><a href="reports.html">📄 Reports</a></li>
+                <li><a href="../analytics.html">📈 Analytics</a></li>
+                <li><a href="../dashboard.html">← Back to User View</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <h4 id="user-name">Loading...</h4>
+                    <p id="user-role">Administrator</p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <h1>Ministry Management</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-primary" onclick="showAddMinistryModal()">+ Add Ministry</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-ministries">0</div>
+                        <div class="stat-card-label">Total Ministries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-ministry-complaints">0</div>
+                        <div class="stat-card-label">Total Complaints</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="avg-resolution-rate">0%</div>
+                        <div class="stat-card-label">Avg Resolution Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="pending-assignments">0</div>
+                        <div class="stat-card-label">Pending Assignments</div>
+                    </div>
+                </div>
+
+                <!-- Ministries List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>All Ministries</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Ministry Name</th>
+                                    <th>Contact Email</th>
+                                    <th>Contact Phone</th>
+                                    <th>Minister</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ministries-list">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 30px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Ministry Modal -->
+    <div id="ministry-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 20px;">
+        <div style="background: white; margin: 50px auto; padding: 40px; border-radius: 15px; max-width: 600px;">
+            <h2 style="margin-bottom: 20px;" id="modal-title">Add Ministry</h2>
+            <form id="ministry-form">
+                <input type="hidden" id="ministry-id">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Ministry Name *</label>
+                    <input type="text" id="ministry-name" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Ministry Code *</label>
+                    <input type="text" id="ministry-code" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required maxlength="20">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Description</label>
+                    <textarea id="ministry-description" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" rows="3"></textarea>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Contact Email</label>
+                    <input type="email" id="ministry-email" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Contact Phone</label>
+                    <input type="tel" id="ministry-phone" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Minister Name</label>
+                    <input type="text" id="minister-name" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Ministry</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeMinistryModal()" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let authToken = null;
+        let editingMinistryId = null;
+
+        // Check authentication
+        function checkAuth() {
+            authToken = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+
+            if (!authToken || !userStr) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            currentUser = JSON.parse(userStr);
+            
+            if (currentUser.role_id !== 2) {
+                alert('Access denied. Admin privileges required.');
+                window.location.href = '../dashboard.html';
+                return;
+            }
+
+            document.getElementById('user-name').textContent = currentUser.name;
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../login.html';
+        }
+
+        // API call with auth
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Request failed');
+            }
+
+            return await response.json();
+        }
+
+        // Load ministries
+        async function loadMinistries() {
+            try {
+                const ministries = await apiCall('/admin/ministries');
+                const performance = await apiCall('/analytics/complaints-by-ministry');
+                
+                if (Array.isArray(ministries)) {
+                    document.getElementById('total-ministries').textContent = ministries.length;
+                    
+                    // Calculate stats
+                    let totalComplaints = 0;
+                    let totalResolutionRate = 0;
+                    
+                    if (performance && Array.isArray(performance)) {
+                        performance.forEach(p => {
+                            totalComplaints += p.total || 0;
+                            totalResolutionRate += p.resolution_rate || 0;
+                        });
+                        
+                        document.getElementById('total-ministry-complaints').textContent = totalComplaints;
+                        document.getElementById('avg-resolution-rate').textContent = 
+                            (totalResolutionRate / performance.length).toFixed(1) + '%';
+                    }
+                    
+                    displayMinistries(ministries);
+                }
+            } catch (error) {
+                console.error('Error loading ministries:', error);
+            }
+        }
+
+        // Display ministries
+        function displayMinistries(ministries) {
+            const tbody = document.getElementById('ministries-list');
+
+            if (ministries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">No ministries found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = ministries.map(ministry => `
+                <tr>
+                    <td><strong>${ministry.code}</strong></td>
+                    <td>${ministry.name}</td>
+                    <td>${ministry.contact_email || 'N/A'}</td>
+                    <td>${ministry.contact_phone || 'N/A'}</td>
+                    <td>${ministry.minister_name || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 5px 15px;" onclick="editMinistry(${ministry.id})">Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Show add ministry modal
+        function showAddMinistryModal() {
+            editingMinistryId = null;
+            document.getElementById('modal-title').textContent = 'Add Ministry';
+            document.getElementById('ministry-form').reset();
+            document.getElementById('ministry-id').value = '';
+            document.getElementById('ministry-modal').style.display = 'block';
+        }
+
+        // Edit ministry
+        async function editMinistry(id) {
+            try {
+                const ministries = await apiCall('/admin/ministries');
+                const ministry = ministries.find(m => m.id === id);
+                
+                if (ministry) {
+                    editingMinistryId = id;
+                    document.getElementById('modal-title').textContent = 'Edit Ministry';
+                    document.getElementById('ministry-id').value = ministry.id;
+                    document.getElementById('ministry-name').value = ministry.name;
+                    document.getElementById('ministry-code').value = ministry.code;
+                    document.getElementById('ministry-description').value = ministry.description || '';
+                    document.getElementById('ministry-email').value = ministry.contact_email || '';
+                    document.getElementById('ministry-phone').value = ministry.contact_phone || '';
+                    document.getElementById('minister-name').value = ministry.minister_name || '';
+                    document.getElementById('ministry-modal').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading ministry:', error);
+            }
+        }
+
+        // Close ministry modal
+        function closeMinistryModal() {
+            document.getElementById('ministry-modal').style.display = 'none';
+            document.getElementById('ministry-form').reset();
+            editingMinistryId = null;
+        }
+
+        // Submit ministry form
+        document.getElementById('ministry-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                name: document.getElementById('ministry-name').value,
+                code: document.getElementById('ministry-code').value,
+                description: document.getElementById('ministry-description').value,
+                contact_email: document.getElementById('ministry-email').value,
+                contact_phone: document.getElementById('ministry-phone').value,
+                minister_name: document.getElementById('minister-name').value
+            };
+
+            try {
+                if (editingMinistryId) {
+                    await apiCall(`/admin/ministries/${editingMinistryId}`, 'PUT', data);
+                    alert('Ministry updated successfully!');
+                } else {
+                    await apiCall('/admin/ministries', 'POST', data);
+                    alert('Ministry created successfully!');
+                }
+                
+                closeMinistryModal();
+                loadMinistries();
+            } catch (error) {
+                console.error('Error saving ministry:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Initialize
+        checkAuth();
+        loadMinistries();
+    </script>
+</body>
+</html>
