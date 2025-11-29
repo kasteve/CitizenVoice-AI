@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CitizenVoice AI</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🗳️ CitizenVoice</h2>
+                <p>Participatory Governance</p>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+                <li><a href="policies.html">📋 Policies</a></li>
+                <li><a href="complaints.html">📢 My Complaints</a></li>
+                <li><a href="analytics.html">📈 Analytics</a></li>
+                <li><a href="ussd-simulator.html" target="_blank">📱 USSD Simulator</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <h4 id="user-name">Loading...</h4>
+                    <p id="user-district">District</p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <h1>Welcome Back!</h1>
+                <div class="topbar-actions">
+                    <div class="notification-icon">
+                        🔔
+                        <span class="notification-badge" id="notification-count">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="total-complaints">0</div>
+                                <div class="stat-card-label">My Complaints</div>
+                            </div>
+                            <div class="stat-card-icon blue">📢</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="pending-complaints">0</div>
+                                <div class="stat-card-label">Pending</div>
+                            </div>
+                            <div class="stat-card-icon yellow">⏳</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="resolved-complaints">0</div>
+                                <div class="stat-card-label">Resolved</div>
+                            </div>
+                            <div class="stat-card-icon green">✅</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="feedback-count">0</div>
+                                <div class="stat-card-label">Policy Feedback</div>
+                            </div>
+                            <div class="stat-card-icon red">💬</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Quick Actions</h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='complaints.html'">
+                            <h3>📢 Submit Complaint</h3>
+                            <p style="color: #666; margin-top: 10px;">Report issues in your community</p>
+                        </div>
+                        <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='policies.html'">
+                            <h3>📋 View Policies</h3>
+                            <p style="color: #666; margin-top: 10px;">Participate in policy making</p>
+                        </div>
+                        <div class="stat-card" style="cursor: pointer;" onclick="showRatingModal()">
+                            <h3>⭐ Rate Service</h3>
+                            <p style="color: #666; margin-top: 10px;">Rate government services</p>
+                        </div>
+                        <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='analytics.html'">
+                            <h3>📈 View Analytics</h3>
+                            <p style="color: #666; margin-top: 10px;">Explore data insights</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Complaints -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>My Recent Complaints</h2>
+                        <button class="btn btn-primary" onclick="window.location.href='complaints.html'">View All</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tracking Number</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-complaints">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 30px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Active Policies -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Active Policies - Provide Your Feedback</h2>
+                        <button class="btn btn-primary" onclick="window.location.href='policies.html'">View All</button>
+                    </div>
+                    <div id="active-policies" class="stats-grid">
+                        <div style="grid-column: 1/-1; text-align: center; padding: 30px;">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Rating Modal -->
+    <div id="rating-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%;">
+            <h2 style="margin-bottom: 20px;">Rate Government Service</h2>
+            <form id="quick-rating-form">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Service Type</label>
+                    <select id="quick-service-type" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                        <option>Hospital</option>
+                        <option>School</option>
+                        <option>Police Station</option>
+                        <option>Government Office</option>
+                        <option>Court</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Location</label>
+                    <input type="text" id="quick-location" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Rating</label>
+                    <div id="quick-stars" style="font-size: 2rem; cursor: pointer;">
+                        <span data-value="1">☆</span>
+                        <span data-value="2">☆</span>
+                        <span data-value="3">☆</span>
+                        <span data-value="4">☆</span>
+                        <span data-value="5">☆</span>
+                    </div>
+                    <input type="hidden" id="quick-rating-value" value="0">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Comment (Optional)</label>
+                    <textarea id="quick-comment" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" rows="3"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Submit Rating</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeRatingModal()" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let authToken = null;
+
+        // Check authentication
+        function checkAuth() {
+            authToken = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+
+            if (!authToken || !userStr) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentUser = JSON.parse(userStr);
+            document.getElementById('user-name').textContent = currentUser.name;
+            document.getElementById('user-district').textContent = currentUser.district_name || 'District';
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        // API call with auth
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            return await response.json();
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                // Load user's complaints
+                const complaints = await apiCall('/feedback/complaint/user/' + currentUser.id);
+                
+                if (Array.isArray(complaints)) {
+                    const pending = complaints.filter(c => c.status === 'Pending').length;
+                    const resolved = complaints.filter(c => c.status === 'Resolved').length;
+
+                    document.getElementById('total-complaints').textContent = complaints.length;
+                    document.getElementById('pending-complaints').textContent = pending;
+                    document.getElementById('resolved-complaints').textContent = resolved;
+
+                    // Load recent complaints
+                    loadRecentComplaints(complaints.slice(0, 5));
+                }
+
+                // Load policies
+                const policies = await apiCall('/policies/?status=Active');
+                if (Array.isArray(policies)) {
+                    loadActivePolicies(policies.slice(0, 3));
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Load recent complaints
+        function loadRecentComplaints(complaints) {
+            const tbody = document.getElementById('recent-complaints');
+
+            if (complaints.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">No complaints yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = complaints.map(complaint => `
+                <tr>
+                    <td><strong>${complaint.tracking_number}</strong></td>
+                    <td>${complaint.category}</td>
+                    <td><span class="status-badge priority-${complaint.priority.toLowerCase()}">${complaint.priority}</span></td>
+                    <td><span class="status-badge status-${complaint.status.toLowerCase().replace(' ', '-')}">${complaint.status}</span></td>
+                    <td>${new Date(complaint.created_at).toLocaleDateString()}</td>
+                    <td><a href="complaints.html?track=${complaint.tracking_number}" style="color: #667eea;">View</a></td>
+                </tr>
+            `).join('');
+        }
+
+        // Load active policies
+        function loadActivePolicies(policies) {
+            const container = document.getElementById('active-policies');
+
+            if (policies.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px;">No active policies</div>';
+                return;
+            }
+
+            container.innerHTML = policies.map(policy => `
+                <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='policies.html?id=${policy.id}'">
+                    <h3 style="margin-bottom: 10px; font-size: 1.1rem;">${policy.title}</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">${policy.description ? policy.description.substring(0, 100) + '...' : ''}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="background: #667eea; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">${policy.category || 'General'}</span>
+                        <span style="color: #667eea; font-weight: 600;">Provide Feedback →</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Rating modal functions
+        function showRatingModal() {
+            document.getElementById('rating-modal').style.display = 'flex';
+            setupQuickStars();
+        }
+
+        function closeRatingModal() {
+            document.getElementById('rating-modal').style.display = 'none';
+        }
+
+        function setupQuickStars() {
+            const stars = document.querySelectorAll('#quick-stars span');
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = star.getAttribute('data-value');
+                    document.getElementById('quick-rating-value').value = value;
+                    stars.forEach(s => {
+                        s.textContent = parseInt(s.getAttribute('data-value')) <= value ? '★' : '☆';
+                    });
+                });
+            });
+        }
+
+        // Submit quick rating
+        document.getElementById('quick-rating-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const ratingValue = document.getElementById('quick-rating-value').value;
+            if (ratingValue === '0') {
+                alert('Please select a rating');
+                return;
+            }
+
+            const data = {
+                citizen_id: currentUser.id,
+                service_type: document.getElementById('quick-service-type').value,
+                service_location: document.getElementById('quick-location').value,
+                district_id: currentUser.district_id,
+                rating: parseInt(ratingValue),
+                comment: document.getElementById('quick-comment').value
+            };
+
+            try {
+                await apiCall('/feedback/rating', 'POST', data);
+                alert('Rating submitted successfully!');
+                closeRatingModal();
+                document.getElementById('quick-rating-form').reset();
+                document.getElementById('quick-rating-value').value = '0';
+                document.querySelectorAll('#quick-stars span').forEach(s => s.textContent = '☆');
+            } catch (error) {
+                console.error('Error submitting rating:', error);
+                alert('Failed to submit rating');
+            }
+        });
+
+        // Initialize
+        checkAuth();
+        loadDashboard();
+    </script>
+</body>
+</html>
