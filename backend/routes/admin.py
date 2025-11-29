@@ -188,3 +188,53 @@ def assign_complaint(current_user, id):
         'message': 'Complaint updated successfully',
         'complaint': complaint.to_dict()
     }), 200
+
+@bp.route('/complaints', methods=['GET'])
+@admin_required
+def get_all_complaints(current_user):
+    """Get all complaints for admin/chairperson"""
+    status_filter = request.args.get('status')
+    
+    query = Complaint.query
+    
+    # If chairperson, only show complaints from their district
+    if current_user.role_id == 4:  # Chairperson
+        query = query.filter_by(district_id=current_user.district_id)
+    
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    
+    complaints = query.order_by(Complaint.created_at.desc()).all()
+    return jsonify([c.to_dict() for c in complaints]), 200
+
+@bp.route('/complaints/<int:id>/assign', methods=['PUT'])
+@admin_required
+def update_complaint_status(current_user, id):
+    """Update complaint status and assignment"""
+    complaint = Complaint.query.get_or_404(id)
+    data = request.get_json()
+    
+    # Chairpersons can only update complaints in their district
+    if current_user.role_id == 4 and complaint.district_id != current_user.district_id:
+        return jsonify({'error': 'You can only manage complaints in your district'}), 403
+    
+    if 'ministry_id' in data and data['ministry_id']:
+        complaint.ministry_id = data['ministry_id']
+    
+    if 'status' in data:
+        complaint.status = data['status']
+        
+        if data['status'] == 'Resolved':
+            complaint.resolved_at = datetime.utcnow()
+            if 'resolution_notes' in data:
+                complaint.resolution_notes = data['resolution_notes']
+    
+    if 'assigned_to' in data:
+        complaint.assigned_to = data['assigned_to']
+    
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Complaint updated successfully',
+        'complaint': complaint.to_dict()
+    }), 200

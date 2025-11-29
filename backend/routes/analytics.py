@@ -1,15 +1,16 @@
 from flask import Blueprint, request, jsonify
 from models import db, Complaint, Ministry, District, ServiceRating, PolicyFeedback
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, case
 from auth import token_required
+from sqlalchemy import extract
+from sqlalchemy import case, func, text
 from datetime import datetime, timedelta
 
 bp = Blueprint('analytics', __name__)
 
 @bp.route('/dashboard', methods=['GET'])
-@token_required
-def get_dashboard_stats(current_user):
-    """Get overall dashboard statistics"""
+def get_dashboard_stats():
+    """Get overall dashboard statistics - Public endpoint"""
     
     # Total counts
     total_complaints = Complaint.query.count()
@@ -43,23 +44,22 @@ def get_dashboard_stats(current_user):
         'high_complaints': high_complaints,
         'normal_complaints': normal_complaints,
         'recent_complaints': recent_complaints,
-        'average_rating': round(avg_rating, 2),
+        'average_rating': round(float(avg_rating), 2) if avg_rating else 0,
         'total_feedback': total_feedback,
         'resolution_rate': round((resolved_complaints / total_complaints * 100), 2) if total_complaints > 0 else 0
     }), 200
 
 @bp.route('/complaints-by-ministry', methods=['GET'])
-@token_required
-def complaints_by_ministry(current_user):
-    """Get complaint distribution by ministry"""
+def complaints_by_ministry():
+    """Get complaint distribution by ministry - Public endpoint"""
     
     results = db.session.query(
         Ministry.name,
         Ministry.code,
         func.count(Complaint.id).label('total'),
-        func.sum(func.case((Complaint.status == 'Pending', 1), else_=0)).label('pending'),
-        func.sum(func.case((Complaint.status == 'In Progress', 1), else_=0)).label('in_progress'),
-        func.sum(func.case((Complaint.status == 'Resolved', 1), else_=0)).label('resolved')
+        func.sum(case((Complaint.status == 'Pending', 1), else_=0)).label('pending'),
+        func.sum(case((Complaint.status == 'In Progress', 1), else_=0)).label('in_progress'),
+        func.sum(case((Complaint.status == 'Resolved', 1), else_=0)).label('resolved')
     ).outerjoin(
         Complaint, Ministry.id == Complaint.ministry_id
     ).group_by(
@@ -68,29 +68,30 @@ def complaints_by_ministry(current_user):
     
     data = []
     for row in results:
+        total = row.total or 0
+        resolved = row.resolved or 0
         data.append({
             'ministry': row.name,
             'code': row.code,
-            'total': row.total or 0,
+            'total': total,
             'pending': row.pending or 0,
             'in_progress': row.in_progress or 0,
-            'resolved': row.resolved or 0,
-            'resolution_rate': round((row.resolved / row.total * 100), 2) if row.total > 0 else 0
+            'resolved': resolved,
+            'resolution_rate': round((resolved / total * 100), 2) if total > 0 else 0
         })
     
     return jsonify(data), 200
 
 @bp.route('/complaints-by-district', methods=['GET'])
-@token_required
-def complaints_by_district(current_user):
-    """Get complaint distribution by district"""
+def complaints_by_district():
+    """Get complaint distribution by district - Public endpoint"""
     
     results = db.session.query(
         District.name,
         District.region,
         func.count(Complaint.id).label('total'),
-        func.sum(func.case((Complaint.status == 'Pending', 1), else_=0)).label('pending'),
-        func.sum(func.case((Complaint.status == 'Resolved', 1), else_=0)).label('resolved')
+        func.sum(case((Complaint.status == 'Pending', 1), else_=0)).label('pending'),
+        func.sum(case((Complaint.status == 'Resolved', 1), else_=0)).label('resolved')
     ).outerjoin(
         Complaint, District.id == Complaint.district_id
     ).group_by(
@@ -112,9 +113,8 @@ def complaints_by_district(current_user):
     return jsonify(data), 200
 
 @bp.route('/complaints-by-category', methods=['GET'])
-@token_required
-def complaints_by_category(current_user):
-    """Get complaint distribution by category"""
+def complaints_by_category():
+    """Get complaint distribution by category - Public endpoint"""
     
     results = db.session.query(
         Complaint.category,
@@ -130,42 +130,43 @@ def complaints_by_category(current_user):
     return jsonify(data), 200
 
 @bp.route('/complaints-timeline', methods=['GET'])
-@token_required
-def complaints_timeline(current_user):
-    """Get complaints over time (last 12 months)"""
+def complaints_timeline():
+    """Get complaints over time (last 12 months) - Public endpoint"""
     
     twelve_months_ago = datetime.utcnow() - timedelta(days=365)
-    
+
     results = db.session.query(
-        func.date_trunc('month', Complaint.created_at).label('month'),
+        extract('year', Complaint.created_at).label('year'),
+        extract('month', Complaint.created_at).label('month'),
         func.count(Complaint.id).label('count')
     ).filter(
         Complaint.created_at >= twelve_months_ago
     ).group_by(
-        'month'
+        extract('year', Complaint.created_at),
+        extract('month', Complaint.created_at)
     ).order_by(
-        'month'
+        extract('year', Complaint.created_at),
+        extract('month', Complaint.created_at)
     ).all()
     
     data = []
     for row in results:
+        month_str = f"{int(row.year)}-{int(row.month):02d}"
         data.append({
-            'month': row.month.strftime('%Y-%m') if row.month else None,
+            'month': month_str,
             'count': row.count
         })
     
     return jsonify(data), 200
 
 @bp.route('/top-issues', methods=['GET'])
-@token_required
-def top_issues(current_user):
-    """Get most common complaint themes/keywords"""
+def top_issues():
+    """Get most common complaint themes/keywords - Public endpoint"""
     
-    # Simple keyword extraction from descriptions
     complaints = Complaint.query.all()
     
     keywords = {}
-    common_words = ['the', 'is', 'in', 'at', 'of', 'and', 'a', 'to', 'for', 'on']
+    common_words = ['the', 'is', 'in', 'at', 'of', 'and', 'a', 'to', 'for', 'on', 'with', 'be', 'this', 'that', 'have', 'has']
     
     for complaint in complaints:
         if complaint.description:
@@ -183,41 +184,46 @@ def top_issues(current_user):
     return jsonify(data), 200
 
 @bp.route('/ministry-performance', methods=['GET'])
-@token_required
-def ministry_performance(current_user):
-    """Get ministry performance metrics"""
-    
+def ministry_performance():
+    """Get ministry performance metrics - Public endpoint"""
+
     results = db.session.query(
         Ministry.name,
         func.count(Complaint.id).label('total_complaints'),
-        func.sum(func.case((Complaint.status == 'Resolved', 1), else_=0)).label('resolved'),
+        func.sum(
+            case((Complaint.status == 'Resolved', 1), else_=0)
+        ).label('resolved'),
         func.avg(
-            func.extract('epoch', Complaint.resolved_at - Complaint.created_at) / 86400
+            case(
+                (Complaint.resolved_at.isnot(None),
+                 func.datediff(text("day"), Complaint.created_at, Complaint.resolved_at)),
+                else_=None
+            )
         ).label('avg_resolution_days')
     ).outerjoin(
         Complaint, Ministry.id == Complaint.ministry_id
-    ).filter(
-        Complaint.resolved_at.isnot(None)
     ).group_by(
         Ministry.id, Ministry.name
     ).all()
-    
+
     data = []
     for row in results:
+        total = row.total_complaints or 0
+        resolved = row.resolved or 0
+        
         data.append({
             'ministry': row.name,
-            'total_complaints': row.total_complaints or 0,
-            'resolved': row.resolved or 0,
-            'avg_resolution_days': round(row.avg_resolution_days, 1) if row.avg_resolution_days else 0,
-            'resolution_rate': round((row.resolved / row.total_complaints * 100), 2) if row.total_complaints > 0 else 0
+            'total_complaints': total,
+            'resolved': resolved,
+            'avg_resolution_days': round(float(row.avg_resolution_days), 1) if row.avg_resolution_days else 0,
+            'resolution_rate': round((resolved / total * 100), 2) if total > 0 else 0
         })
-    
+
     return jsonify(data), 200
 
 @bp.route('/service-ratings-summary', methods=['GET'])
-@token_required
-def service_ratings_summary(current_user):
-    """Get service ratings summary"""
+def service_ratings_summary():
+    """Get service ratings summary - Public endpoint"""
     
     results = db.session.query(
         ServiceRating.service_type,
@@ -231,16 +237,15 @@ def service_ratings_summary(current_user):
     for row in results:
         data.append({
             'service_type': row.service_type,
-            'avg_rating': round(row.avg_rating, 2),
+            'avg_rating': round(float(row.avg_rating), 2),
             'total_ratings': row.total_ratings
         })
     
     return jsonify(data), 200
 
 @bp.route('/unresolved-by-ministry', methods=['GET'])
-@token_required
-def unresolved_by_ministry(current_user):
-    """Get ministries with highest unresolved complaints"""
+def unresolved_by_ministry():
+    """Get ministries with highest unresolved complaints - Public endpoint"""
     
     results = db.session.query(
         Ministry.name,

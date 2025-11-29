@@ -82,3 +82,35 @@ def admin_required(f):
         return f(current_user, *args, **kwargs)
     
     return decorated
+
+def admin_required(f):
+    """Decorator to require admin or chairperson role"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(' ')[1]
+            except IndexError:
+                return jsonify({'error': 'Invalid token format'}), 401
+        
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        payload = decode_token(token)
+        if not payload:
+            return jsonify({'error': 'Token is invalid or expired'}), 401
+        
+        current_user = Citizen.query.get(payload['citizen_id'])
+        if not current_user or not current_user.is_active:
+            return jsonify({'error': 'User not found or inactive'}), 401
+        
+        # Allow admin (role 2) and chairperson (role 4)
+        if current_user.role_id not in [2, 4]:
+            return jsonify({'error': 'Admin or Chairperson access required'}), 403
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated

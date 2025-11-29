@@ -276,26 +276,41 @@
             }
         }
 
-        // Load recent complaints
-        function loadRecentComplaints(complaints) {
-            const tbody = document.getElementById('recent-complaints');
-
-            if (complaints.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">No complaints yet</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = complaints.map(complaint => `
-                <tr>
-                    <td><strong>${complaint.tracking_number}</strong></td>
-                    <td>${complaint.category}</td>
-                    <td><span class="status-badge priority-${complaint.priority.toLowerCase()}">${complaint.priority}</span></td>
-                    <td><span class="status-badge status-${complaint.status.toLowerCase().replace(' ', '-')}">${complaint.status}</span></td>
-                    <td>${new Date(complaint.created_at).toLocaleDateString()}</td>
-                    <td><a href="complaints.html?track=${complaint.tracking_number}" style="color: #667eea;">View</a></td>
-                </tr>
-            `).join('');
+        // Load recent complaints - FIXED
+async function loadRecentComplaints() {
+    try {
+        const complaints = await apiCall(`/feedback/complaint/user/${currentUser.id}`);
+        
+        if (Array.isArray(complaints)) {
+            const recent = complaints.slice(0, 5);
+            loadRecentComplaintsDisplay(recent);
         }
+    } catch (error) {
+        console.error('Error loading recent complaints:', error);
+        const tbody = document.getElementById('recent-complaints');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #666;">No complaints yet. Click "Submit Complaint" to get started.</td></tr>';
+    }
+}
+
+function loadRecentComplaintsDisplay(complaints) {
+    const tbody = document.getElementById('recent-complaints');
+    
+    if (!complaints || complaints.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #666;">No complaints yet. Click "Submit Complaint" to get started.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = complaints.map(complaint => `
+        <tr>
+            <td><strong>${complaint.tracking_number}</strong></td>
+            <td>${complaint.category}</td>
+            <td><span class="status-badge priority-${complaint.priority.toLowerCase()}">${complaint.priority}</span></td>
+            <td><span class="status-badge status-${complaint.status.toLowerCase().replace(' ', '-')}">${complaint.status}</span></td>
+            <td>${new Date(complaint.created_at).toLocaleDateString()}</td>
+            <td><a href="complaints.html?track=${complaint.tracking_number}" style="color: #667eea;">View</a></td>
+        </tr>
+    `).join('');
+}
 
         // Load active policies
         function loadActivePolicies(policies) {
@@ -320,26 +335,77 @@
 
         // Rating modal functions
         function showRatingModal() {
-            document.getElementById('rating-modal').style.display = 'flex';
-            setupQuickStars();
-        }
+    document.getElementById('rating-modal').style.display = 'flex';
+    // Setup stars when modal opens
+    setTimeout(setupQuickStars, 100);
+}
 
         function closeRatingModal() {
-            document.getElementById('rating-modal').style.display = 'none';
-        }
+    document.getElementById('rating-modal').style.display = 'none';
+    // Reset stars
+    const stars = document.querySelectorAll('#quick-stars span');
+    stars.forEach(s => {
+        s.textContent = '☆';
+        s.style.color = '#d1d5db';
+    });
+    document.getElementById('quick-rating-value').value = '0';
+}
 
-        function setupQuickStars() {
-            const stars = document.querySelectorAll('#quick-stars span');
-            stars.forEach(star => {
-                star.addEventListener('click', () => {
-                    const value = star.getAttribute('data-value');
-                    document.getElementById('quick-rating-value').value = value;
-                    stars.forEach(s => {
-                        s.textContent = parseInt(s.getAttribute('data-value')) <= value ? '★' : '☆';
-                    });
-                });
+    function setupQuickStars() {
+    const stars = document.querySelectorAll('#quick-stars span');
+    const ratingInput = document.getElementById('quick-rating-value');
+    
+    stars.forEach(star => {
+        // Remove any existing listeners
+        star.replaceWith(star.cloneNode(true));
+    });
+    
+    // Re-select after cloning
+    const newStars = document.querySelectorAll('#quick-stars span');
+    
+    newStars.forEach(star => {
+        star.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            ratingInput.value = value;
+            
+            // Update star display
+            newStars.forEach(s => {
+                const starValue = parseInt(s.getAttribute('data-value'));
+                if (starValue <= parseInt(value)) {
+                    s.textContent = '★';
+                    s.style.color = '#fbbf24';
+                } else {
+                    s.textContent = '☆';
+                    s.style.color = '#d1d5db';
+                }
             });
-        }
+        });
+        
+        // Add hover effect
+        star.addEventListener('mouseenter', function() {
+            const value = this.getAttribute('data-value');
+            newStars.forEach(s => {
+                const starValue = parseInt(s.getAttribute('data-value'));
+                if (starValue <= parseInt(value)) {
+                    s.style.color = '#fbbf24';
+                }
+            });
+        });
+        
+        star.addEventListener('mouseleave', function() {
+            const currentValue = ratingInput.value;
+            newStars.forEach(s => {
+                const starValue = parseInt(s.getAttribute('data-value'));
+                if (starValue <= parseInt(currentValue)) {
+                    s.style.color = '#fbbf24';
+                } else {
+                    s.style.color = '#d1d5db';
+                }
+            });
+        });
+    });
+}
+
 
         // Submit quick rating
         document.getElementById('quick-rating-form').addEventListener('submit', async (e) => {

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policy Management - CitizenVoice AI</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🗳️ CitizenVoice</h2>
+                <p>Admin Panel</p>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html">📊 Dashboard</a></li>
+                <li><a href="ministries.html">🏛️ Ministries</a></li>
+                <li><a href="districts.html">📍 Districts</a></li>
+                <li><a href="users.html">👥 Users</a></li>
+                <li><a href="policies-admin.html" class="active">📋 Policies</a></li>
+                <li><a href="complaints-admin.html">📢 All Complaints</a></li>
+                <li><a href="reports.html">📄 Reports</a></li>
+                <li><a href="../analytics.html">📈 Analytics</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <h4 id="user-name">Loading...</h4>
+                    <p>Administrator</p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <h1>Policy Management</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-primary" onclick="showAddPolicyModal()">+ Create Policy</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-policies">0</div>
+                        <div class="stat-card-label">Total Policies</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="active-policies">0</div>
+                        <div class="stat-card-label">Active</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="draft-policies">0</div>
+                        <div class="stat-card-label">Draft</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-policy-feedback">0</div>
+                        <div class="stat-card-label">Total Feedback</div>
+                    </div>
+                </div>
+
+                <!-- Policies List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>All Policies</h2>
+                        <select id="status-filter" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" onchange="filterPolicies()">
+                            <option value="">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Ministry</th>
+                                    <th>Status</th>
+                                    <th>Deadline</th>
+                                    <th>Feedback</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="policies-list">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 30px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Policy Modal -->
+    <div id="policy-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 20px;">
+        <div style="background: white; margin: 50px auto; padding: 40px; border-radius: 15px; max-width: 700px;">
+            <h2 style="margin-bottom: 20px;" id="modal-title">Create Policy</h2>
+            <form id="policy-form">
+                <input type="hidden" id="policy-id">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Policy Title *</label>
+                    <input type="text" id="policy-title" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Category *</label>
+                    <select id="policy-category" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                        <option value="">Select category...</option>
+                        <option>Healthcare</option>
+                        <option>Education</option>
+                        <option>Infrastructure</option>
+                        <option>Agriculture</option>
+                        <option>Economy</option>
+                        <option>Security</option>
+                        <option>Environment</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Ministry *</label>
+                    <select id="policy-ministry" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                        <option value="">Select ministry...</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Description *</label>
+                    <textarea id="policy-description" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" rows="6" required></textarea>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Status *</label>
+                    <select id="policy-status" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                        <option value="Draft">Draft</option>
+                        <option value="Active">Active</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Consultation Deadline</label>
+                    <input type="date" id="policy-deadline" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Policy</button>
+                    <button type="button" class="btn btn-secondary" onclick="closePolicyModal()" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let authToken = null;
+        let allPolicies = [];
+
+        function checkAuth() {
+            authToken = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            if (!authToken || !userStr) {
+                window.location.href = '../login.html';
+                return;
+            }
+            currentUser = JSON.parse(userStr);
+            if (currentUser.role_id !== 2) {
+                alert('Access denied. Admin privileges required.');
+                window.location.href = '../dashboard.html';
+                return;
+            }
+            document.getElementById('user-name').textContent = currentUser.name;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../login.html';
+        }
+
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+            if (data) options.body = JSON.stringify(data);
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Request failed');
+            }
+            return await response.json();
+        }
+
+        async function loadPolicies() {
+            try {
+                const policies = await apiCall('/policies/');
+                const feedbacks = await apiCall('/analytics/dashboard');
+                
+                if (Array.isArray(policies)) {
+                    allPolicies = policies;
+                    document.getElementById('total-policies').textContent = policies.length;
+                    document.getElementById('active-policies').textContent = policies.filter(p => p.status === 'Active').length;
+                    document.getElementById('draft-policies').textContent = policies.filter(p => p.status === 'Draft').length;
+                    document.getElementById('total-policy-feedback').textContent = feedbacks?.total_feedback || 0;
+                    displayPolicies(policies);
+                }
+            } catch (error) {
+                console.error('Error loading policies:', error);
+            }
+        }
+
+        function displayPolicies(policies) {
+            const tbody = document.getElementById('policies-list');
+            if (policies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">No policies found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = policies.map(policy => `
+                <tr>
+                    <td><strong>${policy.title}</strong></td>
+                    <td>${policy.category || 'N/A'}</td>
+                    <td>${policy.ministry_name || 'N/A'}</td>
+                    <td><span class="status-badge status-${policy.status.toLowerCase()}">${policy.status}</span></td>
+                    <td>${policy.deadline ? new Date(policy.deadline).toLocaleDateString() : 'N/A'}</td>
+                    <td>0</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 5px 15px;" onclick="editPolicy(${policy.id})">Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterPolicies() {
+            const status = document.getElementById('status-filter').value;
+            if (!status) {
+                displayPolicies(allPolicies);
+            } else {
+                displayPolicies(allPolicies.filter(p => p.status === status));
+            }
+        }
+
+        async function showAddPolicyModal() {
+            document.getElementById('modal-title').textContent = 'Create Policy';
+            document.getElementById('policy-form').reset();
+            await loadMinistries();
+            document.getElementById('policy-modal').style.display = 'block';
+        }
+
+        async function loadMinistries() {
+            const ministries = await apiCall('/admin/ministries');
+            const select = document.getElementById('policy-ministry');
+            select.innerHTML = '<option value="">Select ministry...</option>';
+            if (Array.isArray(ministries)) {
+                ministries.forEach(m => {
+                    const option = document.createElement('option');
+                    option.value = m.id;
+                    option.textContent = m.name;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        async function editPolicy(id) {
+            const policy = allPolicies.find(p => p.id === id);
+            if (policy) {
+                document.getElementById('modal-title').textContent = 'Edit Policy';
+                document.getElementById('policy-id').value = policy.id;
+                document.getElementById('policy-title').value = policy.title;
+                document.getElementById('policy-category').value = policy.category || '';
+                document.getElementById('policy-description').value = policy.description || '';
+                document.getElementById('policy-status').value = policy.status;
+                if (policy.deadline) {
+                    document.getElementById('policy-deadline').value = policy.deadline.split('T')[0];
+                }
+                await loadMinistries();
+                if (policy.ministry_id) {
+                    document.getElementById('policy-ministry').value = policy.ministry_id;
+                }
+                document.getElementById('policy-modal').style.display = 'block';
+            }
+        }
+
+        function closePolicyModal() {
+            document.getElementById('policy-modal').style.display = 'none';
+        }
+
+        document.getElementById('policy-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const policyId = document.getElementById('policy-id').value;
+            const data = {
+                title: document.getElementById('policy-title').value,
+                category: document.getElementById('policy-category').value,
+                ministry_id: parseInt(document.getElementById('policy-ministry').value),
+                description: document.getElementById('policy-description').value,
+                status: document.getElementById('policy-status').value,
+                deadline: document.getElementById('policy-deadline').value || null,
+                created_by: currentUser.id
+            };
+
+            try {
+                if (policyId) {
+                    await apiCall(`/policies/${policyId}`, 'PUT', data);
+                    alert('Policy updated successfully!');
+                } else {
+                    await apiCall('/policies/', 'POST', data);
+                    alert('Policy created successfully!');
+                }
+                closePolicyModal();
+                loadPolicies();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        checkAuth();
+        loadPolicies();
+    </script>
+</body>
+</html>
