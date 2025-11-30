@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, District, Ministry, Citizen, Complaint
+from models import db, District, Ministry, Citizen, Complaint, SystemReport, AIPrediction
 from auth import admin_required
 from datetime import datetime
 
@@ -238,3 +238,17 @@ def update_complaint_status(current_user, id):
         'message': 'Complaint updated successfully',
         'complaint': complaint.to_dict()
     }), 200
+
+@bp.route('/reports', methods=['GET'])
+@admin_required
+def get_reports(current_user):
+    """Get all system reports"""
+    reports = SystemReport.query.order_by(SystemReport.generated_at.desc()).all()
+    return jsonify([r.to_dict() for r in reports]), 200
+
+@bp.route('/reports/<int:id>', methods=['GET'])
+@admin_required
+def get_report(current_user, id):
+    """Get specific report"""
+    report = SystemReport.query.get_or_404(id)
+    return jsonify(report.to_dict()), 200

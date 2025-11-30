@@ -44,24 +44,23 @@ def submit_complaint(current_user):
     data = request.get_json()
     
     # Analyze complaint
+    from ai.nlp_analyzer import NLPAnalyzer
+    nlp = NLPAnalyzer()
+    
     category = data.get('category') or nlp.categorize_complaint(data['description'])
     priority = nlp.assess_priority(data['description'])
     tracking_number = f"CMP-{uuid.uuid4().hex[:8].upper()}"
     
     # Auto-assign ministry based on category
-    ministry_mapping = {
-        'Infrastructure': 'MOWT',
-        'Healthcare': 'MOH',
-        'Education': 'MOES',
-        'Security': 'MIA',
-        'Agriculture': 'MAAIF',
-        'Water': 'MWE',
-        'Energy': 'MEMD'
-    }
-    
     ministry = None
-    if category in ministry_mapping:
-        ministry = Ministry.query.filter_by(code=ministry_mapping[category]).first()
+    ministry_code = nlp.get_ministry_code_for_category(category)
+    if ministry_code:
+        ministry = Ministry.query.filter_by(code=ministry_code).first()
+    
+    # If no ministry found by category, try to match by keywords
+    if not ministry:
+        # Default fallback
+        ministry = Ministry.query.first()
     
     complaint = Complaint(
         citizen_id=current_user.id,
@@ -85,13 +84,13 @@ def submit_complaint(current_user):
             tracking_number,
             category,
             priority
-        )
-    
-    return jsonify({
-        'message': 'Complaint submitted successfully',
-        'complaint': complaint.to_dict(),
-        'tracking_number': tracking_number
-    }), 201
+    )
+        return jsonify({
+    'message': 'Complaint submitted successfully',
+    'complaint': complaint.to_dict(),
+    'tracking_number': tracking_number,
+    'auto_assigned_ministry': ministry.name if ministry else 'Pending Assignment'
+}), 201
 
 @bp.route('/complaint/<tracking_number>', methods=['GET'])
 def track_complaint(tracking_number):
