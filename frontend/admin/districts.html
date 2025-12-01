@@ -96,6 +96,14 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination -->
+                <div id="districts-pagination" style="display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px; border-top: 2px solid #f0f0f0;">
+                    <button class="btn btn-secondary" onclick="prevDistrictsPage()" id="districts-prev-btn" disabled style="padding: 8px 16px;">« Previous</button>
+                    <span id="districts-page-info" style="color: #666;">Page 1 of 1</span>
+                    <button class="btn btn-secondary" onclick="nextDistrictsPage()" id="districts-next-btn" disabled style="padding: 8px 16px;">Next »</button>
+                </div>
+
             </div>
         </div>
     </main>
@@ -143,6 +151,9 @@
     let authToken = null;
     let editingDistrictId = null;
     let allDistricts = [];
+    let currentDistrictsPage = 1;
+    const districtsPerPage = 10;
+    let displayedDistricts = [];
 
     // Check authentication
     function checkAuth() {
@@ -230,43 +241,74 @@
     }
 
     // Display districts
+
     function displayDistricts(districts, complaintData = []) {
-        const tbody = document.getElementById('districts-list');
+    displayedDistricts = districts;
+    const totalPages = Math.ceil(districts.length / districtsPerPage);
+    const startIndex = (currentDistrictsPage - 1) * districtsPerPage;
+    const endIndex = startIndex + districtsPerPage;
+    const districtsToDisplay = districts.slice(startIndex, endIndex);
+    
+    const tbody = document.getElementById('districts-list');
 
-        if (districts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No districts found</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = districts.map(district => {
-            const complaints = complaintData.find(d => d.district === district.name);
-            const complaintCount = complaints ? complaints.total : 0;
-
-            return `
-                <tr>
-                    <td><strong>${district.name}</strong></td>
-                    <td>${district.region || 'N/A'}</td>
-                    <td>${district.chairperson_id ? 'Assigned' : 'Not Assigned'}</td>
-                    <td>${complaintCount}</td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 5px 15px;" onclick="editDistrict(${district.id})">Edit</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
+    if (districtsToDisplay.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">No districts found</td></tr>';
+        document.getElementById('districts-pagination').style.display = 'none';
+        return;
     }
+
+    tbody.innerHTML = districtsToDisplay.map(district => {
+        const complaints = complaintData.find(d => d.district === district.name);
+        const complaintCount = complaints ? complaints.total : 0;
+
+        return `
+            <tr>
+                <td><strong>${district.name}</strong></td>
+                <td>${district.region || 'N/A'}</td>
+                <td>${district.chairperson_id ? 'Assigned' : 'Not Assigned'}</td>
+                <td>${complaintCount}</td>
+                <td>
+                    <button class="btn btn-secondary" style="padding: 5px 15px;" onclick="editDistrict(${district.id})">Edit</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+     document.getElementById('districts-page-info').textContent = `Page ${currentDistrictsPage} of ${totalPages}`;
+    document.getElementById('districts-prev-btn').disabled = currentDistrictsPage === 1;
+    document.getElementById('districts-next-btn').disabled = currentDistrictsPage === totalPages;
+    document.getElementById('districts-pagination').style.display = 'flex';
+
+    function prevDistrictsPage() {
+    if (currentDistrictsPage > 1) {
+        currentDistrictsPage--;
+        displayDistricts(displayedDistricts);
+    }
+}
+
+function nextDistrictsPage() {
+    const totalPages = Math.ceil(displayedDistricts.length / districtsPerPage);
+    if (currentDistrictsPage < totalPages) {
+        currentDistrictsPage++;
+        displayDistricts(displayedDistricts);
+    }
+}
+
+}
+
 
     // Filter districts
     function filterDistricts() {
-        const region = document.getElementById('region-filter').value;
-        
-        if (!region) {
-            loadDistricts();
-        } else {
-            const filtered = allDistricts.filter(d => d.region === region);
-            displayDistricts(filtered);
-        }
+    const region = document.getElementById('region-filter').value;
+    currentDistrictsPage = 1;
+    
+    if (!region) {
+        loadDistricts();
+    } else {
+        const filtered = allDistricts.filter(d => d.region === region);
+        displayDistricts(filtered);
     }
+}
 
     // Show add district modal
     async function showAddDistrictModal() {

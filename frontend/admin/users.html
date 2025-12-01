@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - CitizenVoice AI</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🗳️ CitizenVoice</h2>
+                <p>Admin Panel</p>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html">📊 Dashboard</a></li>
+                <li><a href="ministries.html">🏛️ Ministries</a></li>
+                <li><a href="districts.html">📍 Districts</a></li>
+                <li><a href="users.html" class="active">👥 Users</a></li>
+                <li><a href="policies-admin.html">📋 Policies</a></li>
+                <li><a href="complaints-admin.html">📢 All Complaints</a></li>
+                <li><a href="reports.html">📄 AI Reports</a></li>
+                <li><a href="../analytics.html">📈 Analytics</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <h4 id="user-name">Loading...</h4>
+                    <p>Administrator</p>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <h1>User Management</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-primary" onclick="window.location.href='../register.html'">+ Add User</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="total-users">0</div>
+                        <div class="stat-card-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="citizen-count">0</div>
+                        <div class="stat-card-label">Citizens</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="admin-count">0</div>
+                        <div class="stat-card-label">Admins</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="chairperson-count">0</div>
+                        <div class="stat-card-label">Chairpersons</div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Filter Users</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; padding: 10px 0;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Role</label>
+                            <select id="role-filter" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" onchange="filterUsers()">
+                                <option value="">All Roles</option>
+                                <option value="1">Citizens</option>
+                                <option value="2">Admins</option>
+                                <option value="3">Ministry Officials</option>
+                                <option value="4">Chairpersons</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">District</label>
+                            <select id="district-filter" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" onchange="filterUsers()">
+                                <option value="">All Districts</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Status</label>
+                            <select id="status-filter" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" onchange="filterUsers()">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button class="btn btn-secondary" onclick="resetFilters()" style="width: 100%;">Reset Filters</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>All Users</h2>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="search-input" placeholder="Search by name, NIN, email..." style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; width: 300px;" onkeyup="searchUsers()">
+                            <span id="results-count" style="color: #666;"></span>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>NIN</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>District</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Registered</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-list">
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 30px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div id="pagination" style="display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px; border-top: 2px solid #f0f0f0;">
+                        <button class="btn btn-secondary" onclick="previousPage()" id="prev-btn" disabled style="padding: 8px 16px;">« Previous</button>
+                        <span id="page-info" style="color: #666;">Page 1 of 1</span>
+                        <button class="btn btn-secondary" onclick="nextPage()" id="next-btn" disabled style="padding: 8px 16px;">Next »</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="user-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 20px;">
+        <div style="background: white; margin: 50px auto; padding: 40px; border-radius: 15px; max-width: 600px;">
+            <h2 style="margin-bottom: 20px;">Manage User</h2>
+            <form id="user-form">
+                <input type="hidden" id="user-id">
+                
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p><strong>NIN:</strong> <span id="user-nin"></span></p>
+                    <p><strong>Name:</strong> <span id="user-name-display"></span></p>
+                    <p><strong>Email:</strong> <span id="user-email-display"></span></p>
+                    <p><strong>Phone:</strong> <span id="user-phone-display"></span></p>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Role *</label>
+                    <select id="user-role" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                        <option value="1">Citizen</option>
+                        <option value="2">Admin</option>
+                        <option value="3">Ministry Official</option>
+                        <option value="4">District Chairperson</option>
+                    </select>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        <strong>Note:</strong> Admins have full system access. Chairpersons can manage complaints in their district.
+                    </small>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Account Status *</label>
+                    <select id="user-status" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" required>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update User</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let authToken = null;
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        function checkAuth() {
+            authToken = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            if (!authToken || !userStr) {
+                window.location.href = '../login.html';
+                return;
+            }
+            currentUser = JSON.parse(userStr);
+            if (currentUser.role_id !== 2) {
+                alert('Access denied. Admin privileges required.');
+                window.location.href = '../dashboard.html';
+                return;
+            }
+            document.getElementById('user-name').textContent = currentUser.name;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '../login.html';
+        }
+
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+            if (data) options.body = JSON.stringify(data);
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Request failed');
+            }
+            return await response.json();
+        }
+
+        async function loadUsers() {
+            try {
+                const users = await apiCall('/admin/users');
+                const districts = await apiCall('/admin/districts');
+                
+                if (Array.isArray(users)) {
+                    allUsers = users;
+                    filteredUsers = users;
+                    
+                    // Update stats
+                    document.getElementById('total-users').textContent = users.length;
+                    document.getElementById('citizen-count').textContent = users.filter(u => u.role_id === 1).length;
+                    document.getElementById('admin-count').textContent = users.filter(u => u.role_id === 2).length;
+                    document.getElementById('chairperson-count').textContent = users.filter(u => u.role_id === 4).length;
+                    
+                    // Populate district filter
+                    const districtFilter = document.getElementById('district-filter');
+                    districts.forEach(d => {
+                        const option = document.createElement('option');
+                        option.value = d.id;
+                        option.textContent = d.name;
+                        districtFilter.appendChild(option);
+                    });
+                    
+                    displayUsers();
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function filterUsers() {
+            const roleFilter = document.getElementById('role-filter').value;
+            const districtFilter = document.getElementById('district-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            
+            filteredUsers = allUsers.filter(user => {
+                let matches = true;
+                
+                if (roleFilter && user.role_id !== parseInt(roleFilter)) {
+                    matches = false;
+                }
+                
+                if (districtFilter && user.district_id !== parseInt(districtFilter)) {
+                    matches = false;
+                }
+                
+                if (statusFilter === 'active' && !user.is_active) {
+                    matches = false;
+                }
+                
+                if (statusFilter === 'inactive' && user.is_active) {
+                    matches = false;
+                }
+                
+                if (searchTerm) {
+                    const searchableText = `${user.name} ${user.nin} ${user.email} ${user.phone}`.toLowerCase();
+                    if (!searchableText.includes(searchTerm)) {
+                        matches = false;
+                    }
+                }
+                
+                return matches;
+            });
+            
+            currentPage = 1;
+            displayUsers();
+        }
+
+        function searchUsers() {
+            filterUsers();
+        }
+
+        function resetFilters() {
+            document.getElementById('role-filter').value = '';
+            document.getElementById('district-filter').value = '';
+            document.getElementById('status-filter').value = '';
+            document.getElementById('search-input').value = '';
+            filteredUsers = allUsers;
+            currentPage = 1;
+            displayUsers();
+        }
+
+        function displayUsers() {
+            const tbody = document.getElementById('users-list');
+            const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
+            
+            if (usersToDisplay.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px;">No users found</td></tr>';
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+            
+            const roleNames = {
+                1: 'Citizen',
+                2: 'Admin',
+                3: 'Ministry Official',
+                4: 'Chairperson'
+            };
+            
+            tbody.innerHTML = usersToDisplay.map(user => `
+                <tr>
+                    <td><strong>${user.nin}</strong></td>
+                    <td>${user.name}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${user.phone}</td>
+                    <td>${user.district_name || 'N/A'}</td>
+                    <td><span class="status-badge ${getRoleClass(user.role_id)}">${roleNames[user.role_id] || 'Unknown'}</span></td>
+                    <td><span class="status-badge ${user.is_active ? 'status-resolved' : 'status-pending'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 5px 15px;" onclick="editUser(${user.id})">Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Update pagination
+            document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage === totalPages;
+            document.getElementById('pagination').style.display = 'flex';
+            
+            // Update results count
+            document.getElementById('results-count').textContent = `Showing ${startIndex + 1}-${Math.min(endIndex, filteredUsers.length)} of ${filteredUsers.length} users`;
+        }
+
+        function getRoleClass(roleId) {
+            const classes = {
+                1: 'status-in-progress',
+                2: 'priority-urgent',
+                3: 'status-pending',
+                4: 'priority-high'
+            };
+            return classes[roleId] || 'status-pending';
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayUsers();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayUsers();
+            }
+        }
+
+        function editUser(id) {
+            const user = allUsers.find(u => u.id === id);
+            if (!user) return;
+            
+            document.getElementById('user-id').value = user.id;
+            document.getElementById('user-nin').textContent = user.nin;
+            document.getElementById('user-name-display').textContent = user.name;
+            document.getElementById('user-email-display').textContent = user.email || 'N/A';
+            document.getElementById('user-phone-display').textContent = user.phone;
+            document.getElementById('user-role').value = user.role_id;
+            document.getElementById('user-status').value = user.is_active.toString();
+            
+            document.getElementById('user-modal').style.display = 'block';
+        }
+
+        function closeUserModal() {
+            document.getElementById('user-modal').style.display = 'none';
+        }
+
+        document.getElementById('user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('user-id').value;
+            const roleId = parseInt(document.getElementById('user-role').value);
+            const isActive = document.getElementById('user-status').value === 'true';
+            
+            try {
+                // Update role
+                await apiCall(`/admin/users/${userId}/role`, 'PUT', { role_id: roleId });
+                
+                // Update status
+                await apiCall(`/admin/users/${userId}/status`, 'PUT', { is_active: isActive });
+                
+                alert('User updated successfully!');
+                closeUserModal();
+                loadUsers();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        checkAuth();
+        loadUsers();
+    </script>
+</body>
+</html>

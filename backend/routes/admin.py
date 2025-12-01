@@ -252,3 +252,21 @@ def get_report(current_user, id):
     """Get specific report"""
     report = SystemReport.query.get_or_404(id)
     return jsonify(report.to_dict()), 200
+
+@bp.route('/users/<int:id>/status', methods=['PUT'])
+@admin_required
+def update_user_status(current_user, id):
+    """Update user status"""
+    user = Citizen.query.get_or_404(id)
+    data = request.get_json()
+    
+    if 'is_active' not in data:
+        return jsonify({'error': 'is_active required'}), 400
+    
+    user.is_active = data['is_active']
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'User status updated successfully',
+        'user': user.to_dict()
+    }), 200

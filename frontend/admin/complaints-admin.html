@@ -97,6 +97,14 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Pagination -->
+                    <div id="complaints-pagination" style="display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px; border-top: 2px solid #f0f0f0;">
+                        <button class="btn btn-secondary" onclick="prevComplaintsPage()" id="complaints-prev-btn" disabled style="padding: 8px 16px;">« Previous</button>
+                        <span id="complaints-page-info" style="color: #666;">Page 1 of 1</span>
+                        <button class="btn btn-secondary" onclick="nextComplaintsPage()" id="complaints-next-btn" disabled style="padding: 8px 16px;">Next »</button>
+                    </div>
+
                 </div>
             </div>
         </main>
@@ -138,132 +146,163 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:5000/api';
-        let currentUser = null;
-        let authToken = null;
-        let allComplaints = [];
+    const API_BASE_URL = 'http://localhost:5000/api';
+    let currentUser = null;
+    let authToken = null;
+    let allComplaints = [];
+    let filteredComplaints = [];
+    let currentPage = 1;
+    const itemsPerPage = 15;
 
-        function checkAuth() {
-            authToken = localStorage.getItem('token');
-            const userStr = localStorage.getItem('user');
-            if (!authToken || !userStr) {
-                window.location.href = '../login.html';
-                return;
-            }
-            currentUser = JSON.parse(userStr);
-            // Allow admin (role 2) and chairperson (role 4)
-            if (currentUser.role_id !== 2 && currentUser.role_id !== 4) {
-                alert('Access denied. Admin or Chairperson privileges required.');
-                window.location.href = '../dashboard.html';
-                return;
-            }
-            document.getElementById('user-name').textContent = currentUser.name;
-            document.getElementById('user-role').textContent = currentUser.role_id === 2 ? 'Administrator' : 'Chairperson';
-        }
-
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+    function checkAuth() {
+        authToken = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        if (!authToken || !userStr) {
             window.location.href = '../login.html';
+            return;
         }
+        currentUser = JSON.parse(userStr);
+        if (currentUser.role_id !== 2 && currentUser.role_id !== 4) {
+            alert('Access denied. Admin or Chairperson privileges required.');
+            window.location.href = '../dashboard.html';
+            return;
+        }
+        document.getElementById('user-name').textContent = currentUser.name;
+        document.getElementById('user-role').textContent = currentUser.role_id === 2 ? 'Administrator' : 'Chairperson';
+    }
 
-        async function apiCall(endpoint, method = 'GET', data = null) {
-            const options = {
-                method: method,
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '../login.html';
+    }
+
+    async function apiCall(endpoint, method = 'GET', data = null) {
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            }
+        };
+        if (data) options.body = JSON.stringify(data);
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+        if (response.status === 401) {
+            logout();
+            return;
+        }
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Request failed');
+        }
+        return await response.json();
+    }
+
+    async function loadComplaints() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/complaints`, {
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`
                 }
-            };
-            if (data) options.body = JSON.stringify(data);
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-            if (response.status === 401) {
-                logout();
-                return;
-            }
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Request failed');
-            }
-            return await response.json();
+            });
+            
+            if (!response.ok) throw new Error('Failed to load complaints');
+            
+            const complaints = await response.json();
+            const status = document.getElementById('filter-status').value;
+            
+            allComplaints = complaints;
+            filteredComplaints = status ? complaints.filter(c => c.status === status) : complaints;
+            
+            document.getElementById('total-complaints').textContent = complaints.length;
+            document.getElementById('pending').textContent = complaints.filter(c => c.status === 'Pending').length;
+            document.getElementById('in-progress').textContent = complaints.filter(c => c.status === 'In Progress').length;
+            document.getElementById('resolved').textContent = complaints.filter(c => c.status === 'Resolved').length;
+            
+            currentPage = 1;
+            displayComplaints();
+        } catch (error) {
+            console.error('Error loading complaints:', error);
         }
+    }
 
-        async function loadComplaints() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/admin/complaints`, {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                });
-                
-                if (!response.ok) throw new Error('Failed to load complaints');
-                
-                const complaints = await response.json();
-                const status = document.getElementById('filter-status').value;
-                
-                allComplaints = complaints;
-                
-                const filtered = status ? complaints.filter(c => c.status === status) : complaints;
-                
-                document.getElementById('total-complaints').textContent = complaints.length;
-                document.getElementById('pending').textContent = complaints.filter(c => c.status === 'Pending').length;
-                document.getElementById('in-progress').textContent = complaints.filter(c => c.status === 'In Progress').length;
-                document.getElementById('resolved').textContent = complaints.filter(c => c.status === 'Resolved').length;
-                
-                displayComplaints(filtered);
-            } catch (error) {
-                console.error('Error loading complaints:', error);
-            }
+    function displayComplaints() {
+        const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const complaintsToDisplay = filteredComplaints.slice(startIndex, endIndex);
+        
+        const tbody = document.getElementById('complaints-list');
+        if (complaintsToDisplay.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px;">No complaints found</td></tr>';
+            document.getElementById('complaints-pagination').style.display = 'none';
+            return;
         }
+        
+        tbody.innerHTML = complaintsToDisplay.map(complaint => `
+            <tr>
+                <td><strong>${complaint.tracking_number}</strong></td>
+                <td>${complaint.citizen_name || 'N/A'}</td>
+                <td>${complaint.category}</td>
+                <td>${complaint.district_name || 'N/A'}</td>
+                <td>${complaint.ministry_name || 'Unassigned'}</td>
+                <td><span class="status-badge priority-${complaint.priority.toLowerCase()}">${complaint.priority}</span></td>
+                <td><span class="status-badge status-${complaint.status.toLowerCase().replace(' ', '-')}">${complaint.status}</span></td>
+                <td>${new Date(complaint.created_at).toLocaleDateString()}</td>
+                <td>
+                    <button class="btn btn-secondary" style="padding: 5px 15px;" onclick="manageComplaint(${complaint.id})">Manage</button>
+                </td>
+            </tr>
+        `).join('');
+        
+        // Update pagination
+        document.getElementById('complaints-page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+        document.getElementById('complaints-prev-btn').disabled = currentPage === 1;
+        document.getElementById('complaints-next-btn').disabled = currentPage === totalPages;
+        document.getElementById('complaints-pagination').style.display = 'flex';
+    }
 
-        function displayComplaints(complaints) {
-            const tbody = document.getElementById('complaints-list');
-            if (complaints.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px;">No complaints found</td></tr>';
-                return;
-            }
-            tbody.innerHTML = complaints.map(complaint => `
-                <tr>
-                    <td><strong>${complaint.tracking_number}</strong></td>
-                    <td>${complaint.citizen_name || 'N/A'}</td>
-                    <td>${complaint.category}</td>
-                    <td>${complaint.district_name || 'N/A'}</td>
-                    <td>${complaint.ministry_name || 'Unassigned'}</td>
-                    <td><span class="status-badge priority-${complaint.priority.toLowerCase()}">${complaint.priority}</span></td>
-                    <td><span class="status-badge status-${complaint.status.toLowerCase().replace(' ', '-')}">${complaint.status}</span></td>
-                    <td>${new Date(complaint.created_at).toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 5px 15px;" onclick="manageComplaint(${complaint.id})">Manage</button>
-                    </td>
-                </tr>
-            `).join('');
+    function prevComplaintsPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            displayComplaints();
         }
+    }
 
-        async function manageComplaint(id) {
-            const complaint = allComplaints.find(c => c.id === id);
-            if (!complaint) return;
-            
-            document.getElementById('complaint-id').value = complaint.id;
-            document.getElementById('update-status').value = complaint.status;
-            document.getElementById('resolution-notes').value = complaint.resolution_notes || '';
-            
-            const infoDiv = document.getElementById('complaint-info');
-            infoDiv.innerHTML = `
-                <h3 style="margin-bottom: 10px;">${complaint.tracking_number}</h3>
-                <p><strong>Citizen:</strong> ${complaint.citizen_name || 'N/A'}</p>
-                <p><strong>Category:</strong> ${complaint.category}</p>
-                <p><strong>Location:</strong> ${complaint.location || 'N/A'}</p>
-                <p><strong>Description:</strong> ${complaint.description}</p>
-            `;
-            
-            await loadMinistries();
-            if (complaint.ministry_id) {
-                document.getElementById('assign-ministry').value = complaint.ministry_id;
-            }
-            
-            document.getElementById('manage-modal').style.display = 'block';
-}
-async function loadMinistries() {
+    function nextComplaintsPage() {
+        const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayComplaints();
+        }
+    }
+
+    async function manageComplaint(id) {
+        const complaint = allComplaints.find(c => c.id === id);
+        if (!complaint) return;
+        
+        document.getElementById('complaint-id').value = complaint.id;
+        document.getElementById('update-status').value = complaint.status;
+        document.getElementById('resolution-notes').value = complaint.resolution_notes || '';
+        
+        const infoDiv = document.getElementById('complaint-info');
+        infoDiv.innerHTML = `
+            <h3 style="margin-bottom: 10px;">${complaint.tracking_number}</h3>
+            <p><strong>Citizen:</strong> ${complaint.citizen_name || 'N/A'}</p>
+            <p><strong>Category:</strong> ${complaint.category}</p>
+            <p><strong>Location:</strong> ${complaint.location || 'N/A'}</p>
+            <p><strong>Description:</strong> ${complaint.description}</p>
+        `;
+        
+        await loadMinistries();
+        if (complaint.ministry_id) {
+            document.getElementById('assign-ministry').value = complaint.ministry_id;
+        }
+        
+        document.getElementById('manage-modal').style.display = 'block';
+    }
+
+    async function loadMinistries() {
         const ministries = await apiCall('/admin/ministries');
         const select = document.getElementById('assign-ministry');
         select.innerHTML = '<option value="">Select ministry...</option>';
@@ -318,5 +357,6 @@ async function loadMinistries() {
     checkAuth();
     loadComplaints();
 </script>
+
 </body>
 </html>
